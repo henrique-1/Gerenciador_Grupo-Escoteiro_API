@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//Encargos
+model role { 
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(64)
+  description String @db.VarChar(2048)
+  branchId String @db.Char(36)
+
+  users_groups users_group[]
+  branch branch @relation(fields: [branchId], references: [id])
+}
+
+//Escotista
+model user {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.Char(64)
+  cpf String @db.Char(14) @unique
+  phone String @db.Char(16)
+  birth DateTime @db.Date
+  image_path String @db.VarChar(512)
+  
+  users_groups users_group[]
+  users_responsible user_responsible[]
+  event_user event_user[]
+}
+
+// Pais ou Responsável
+model responsible {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.Char(64)
+  cpf String @db.Char(14) @unique
+  phone String @db.Char(16)
+  birth DateTime @db.Date
+  image_path String @db.VarChar(512)
+
+  users_responsible user_responsible[]
+}
+
+//Associação Resposável - Escotista
+model user_responsible {
+  id String @id @db.Char(36) @default(uuid())
+  userId String @db.Char(36)
+  responsibleId String @db.Char(36)
+
+  responsible responsible @relation(fields: [responsibleId], references: [id])
+  user user @relation(fields: [userId], references: [id])
+}
+
+// Ramo
+model branch {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(8)
+  min_age Int
+  max_age Int
+
+  groups group[]
+  role role[]
+  administrator administrator[]
+}
+
+// Matilha ou Patrulha ou Clã
+model group { 
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(64)
+  branchId String
+
+  branch branch @relation(fields: [branchId], references: [id])
+  users_groups users_group[]
+}
+
+// Associação Grupo - Usuário
+model users_group {
+  id String @id @db.Char(36) @default(uuid())
+  groupId String @db.Char(36)
+  userId String @db.Char(36)
+  roleId String @db.Char(36) 
+
+  group group @relation(fields: [groupId], references: [id])
+  role role @relation(fields: [roleId], references: [id])
+  user user @relation(fields: [userId], references: [id])
+}
+
+// Chefia
+model administrator {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.Char(64)
+  cpf String @db.Char(14) @unique
+  phone String @db.Char(16)
+  birth DateTime @db.Date
+  branchId String @db.Char(36)
+  email String @unique
+  password String @db.Char(60)
+  image_path String @db.VarChar(512)
+
+  branch branch @relation(fields: [branchId], references: [id])
+}
+
+// Contas
+model bill {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(128)
+  dueDate DateTime @db.Date
+  value Decimal @db.Decimal(10, 2)
+  status String @db.VarChar(15)
+}
+
+// Tipo de Evento
+model event_type { 
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(128)
+  description String? @db.VarChar(2048)
+
+  event event[]
+}
+
+// Eventos
+model event {
+  id String @id @db.Char(36) @default(uuid())
+  name String @db.VarChar(128)
+  event_typeId String @db.Char(36)
+  date DateTime @db.Date
+
+  event_type event_type @relation(fields: [event_typeId], references: [id])
+  event_user event_user[]
+}
+
+// Associação Evento - Escotista
+model event_user {
+  id String @id @db.Char(36) @default(uuid())
+  eventId String @db.Char(36)
+  userId String @db.Char(36)
+
+  event event @relation(fields: [eventId], references: [id])
+  user user @relation(fields: [userId], references: [id])
+}
